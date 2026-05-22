@@ -58,5 +58,10 @@ open index.html
 | `versionInformation` | string |
 | `deprecationPolicy` | string |
 
+# See template-entry.json
+```
+cat ./template-entry.json
+```
+
 ## Notes
 - Delete `catalog.db` and re-run `python seed.py` if you need a fresh database.
