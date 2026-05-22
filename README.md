@@ -1,4 +1,4 @@
-# operational_catalog
+# Operations Catalog
 
 
 ## API Actions
@@ -22,16 +22,10 @@ TBD
 ## Local development
 ### Starting local API
 ```
-cd local_build/operational_catalog
+cd local_build/operations-catalog-local
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-```
-
-### Wipe and re-seed the database
-```
-rm -f catalog.db
-python seed.py
 ```
 
 ### Restart the server

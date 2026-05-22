@@ -8,17 +8,21 @@
 ```bash
 # 1. Create and activate a virtual environment (recommended)
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source venv/bin/activate
 
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. (Optional) Seed the database with a sample entry
+# 3. (Optional) CAUTION! Erase the local SQLite db and seed the database with a sample entry
+rm -f catalog.db
 python seed.py
 
 # 4. Start the server
 python app.py
 # → http://localhost:5000
+
+# 5. Open local UI
+open index.html
 ```
 
 ## Endpoints
