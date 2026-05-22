@@ -62,6 +62,3 @@ open index.html
 ```
 cat ./template-entry.json
 ```
-
-## Notes
-- Delete `catalog.db` and re-run `python seed.py` if you need a fresh database.
