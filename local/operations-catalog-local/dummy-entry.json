@@ -1,0 +1,30 @@
+{
+  "SLA": {
+    "availability": "UNDEFINED",
+    "resolutionTargets": "UNDEFINED",
+    "responseTimes": "UNDEFINED"
+  },
+  "activeMaintenanceWindows": "UNDEFINED",
+  "costModel": "External information needed",
+  "criticalDependencies": [
+    "link || description"
+  ],
+  "deprecationPolicy": "External information needed",
+  "description": "With great power comes great responsibility",
+  "documentation": [
+    "https://example.com/docs"
+  ],
+  "incidentManagement": "Escalation to Platform Engineering or the SRE team via FireHydrant Incident response procedure",
+  "monitoringTools": "UNDEFINED",
+  "onboardingDocumentation": "https://example.com/onboarding",
+  "requestsChannel": "Platform Engineering",
+  "serviceCategory": "Supported || Operated",
+  "serviceName": "Symbiote",
+  "serviceSubjectMatterExperts": [
+    "Platform Engineering",
+    "Peter Parker"
+  ],
+  "status": "Active",
+  "targetAudience": "Platform9 Internal",
+  "versionInformation": "N/A"
+}
