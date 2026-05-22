@@ -6,7 +6,7 @@
 ## Setup & Run
 
 ```bash
-# 1. Create and activate a virtual environment (recommended)
+# 1. Create a virtual environment (recommended for consistency)
 python -m venv venv
 source venv/bin/activate
 

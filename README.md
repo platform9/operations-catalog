@@ -18,22 +18,3 @@ curl -X DELETE "http://localhost:5000/catalog/name/yourServiceName"
 ### MODIFYING AN ENTRY
 
 TBD
-
-## Local development
-### Starting local API
-```
-cd local_build/operations-catalog-local
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Restart the server
-```
-python app.py
-```
-
-### Open local UI
-```
-open index.html
-```
