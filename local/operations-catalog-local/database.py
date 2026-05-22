@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS catalog (
     serviceName                 TEXT NOT NULL,
     description                 TEXT,
     status                      TEXT,
+    health                      TEXT,
     serviceCategory             TEXT,
     serviceSubjectMatterExperts TEXT,   -- JSON array
     criticalDependencies        TEXT,   -- JSON array

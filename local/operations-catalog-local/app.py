@@ -49,15 +49,16 @@ def create_catalog_entry():
     cursor = db.execute(
         """
         INSERT INTO catalog (
-            serviceName, description, status, serviceCategory,
+            serviceName, health, description, status, serviceCategory,
             serviceSubjectMatterExperts, criticalDependencies, documentation,
             SLA, targetAudience, requestsChannel, incidentManagement,
             monitoringTools, activeMaintenanceWindows, onboardingDocumentation,
             costModel, versionInformation, deprecationPolicy
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         (
             data.get("serviceName"),
+            data.get("health"),
             data.get("description"),
             data.get("status"),
             data.get("serviceCategory"),
@@ -106,6 +107,7 @@ def update_catalog_entry(entry_id):
         """,
         (
             current.get("serviceName"),
+            current.get("health"),
             current.get("description"),
             current.get("status"),
             current.get("serviceCategory"),

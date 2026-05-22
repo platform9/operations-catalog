@@ -14,12 +14,13 @@
   "documentation": [
     "https://example.com/docs"
   ],
+  "health": "UNDEFINED",
   "incidentManagement": "Escalation to Platform Engineering or the SRE team via FireHydrant Incident response procedure",
   "monitoringTools": "UNDEFINED",
   "onboardingDocumentation": "https://example.com/onboarding",
   "requestsChannel": "Platform Engineering",
   "serviceCategory": "Supported || Operated",
-  "serviceName": "Symbiote",
+  "serviceName": "BigPete",
   "serviceSubjectMatterExperts": [
     "Platform Engineering",
     "Peter Parker"

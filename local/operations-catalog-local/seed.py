@@ -15,6 +15,7 @@ SAMPLE = {
     "serviceSubjectMatterExperts": ["Platform Engineering", "Peter Parker"],
     "criticalDependencies": ["link|description"],
     "documentation": ["https://example.com/docs"],
+    "health": "UNDEFINED",
     "SLA": {
         "externalLink": "https://<>"
     },
