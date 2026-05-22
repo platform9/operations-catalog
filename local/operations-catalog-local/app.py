@@ -139,6 +139,53 @@ def update_catalog_entry(entry_id):
     row = db.execute("SELECT * FROM catalog WHERE id = ?", (entry_id,)).fetchone()
     return jsonify(deserialize(row))
 
+# ── PUT update a catalog entry by serviceName ────────────────────────────────────────────────
+@app.route("/catalog/name/<string:service_name>", methods=["PUT"])
+def update_catalog_entry_by_name(service_name):
+    db = get_db()
+    existing = db.execute("SELECT * FROM catalog WHERE serviceName = ?", (service_name,)).fetchone()
+    if existing is None:
+        abort(404, description=f"Entry '{service_name}' not found")
+
+    data = request.get_json(force=True)
+    current = deserialize(existing)
+    current.update(data)
+
+    db.execute(
+        """
+        UPDATE catalog SET
+            serviceName=?, health=?, description=?, status=?, serviceCategory=?,
+            serviceSubjectMatterExperts=?, criticalDependencies=?, documentation=?,
+            SLA=?, targetAudience=?, requestsChannel=?, incidentManagement=?,
+            monitoringTools=?, activeMaintenanceWindows=?, onboardingDocumentation=?,
+            costModel=?, versionInformation=?, deprecationPolicy=?
+        WHERE serviceName=?
+        """,
+        (
+            current.get("serviceName"),
+            current.get("health"),
+            current.get("description"),
+            current.get("status"),
+            current.get("serviceCategory"),
+            json.dumps(current.get("serviceSubjectMatterExperts", [])),
+            json.dumps(current.get("criticalDependencies", [])),
+            json.dumps(current.get("documentation", [])),
+            json.dumps(current.get("SLA", {})),
+            current.get("targetAudience"),
+            current.get("requestsChannel"),
+            current.get("incidentManagement"),
+            current.get("monitoringTools"),
+            current.get("activeMaintenanceWindows"),
+            current.get("onboardingDocumentation"),
+            current.get("costModel"),
+            current.get("versionInformation"),
+            current.get("deprecationPolicy"),
+            service_name,
+        ),
+    )
+    db.commit()
+    row = db.execute("SELECT * FROM catalog WHERE serviceName = ?", (service_name,)).fetchone()
+    return jsonify(deserialize(row))
 
 # ── DELETE a catalog entry ────────────────────────────────────────────────────
 @app.route("/catalog/<int:entry_id>", methods=["DELETE"])
