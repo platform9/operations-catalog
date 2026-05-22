@@ -37,6 +37,14 @@ def get_catalog_entry(entry_id):
         abort(404, description=f"Entry {entry_id} not found")
     return jsonify(deserialize(row))
 
+# ── GET single catalog entry by serviceName ───────────────────────────────────────────
+@app.route("/catalog/name/<string:service_name>", methods=["GET"])
+def get_catalog_entry_by_name(service_name):
+    db = get_db()
+    row = db.execute("SELECT * FROM catalog WHERE serviceName = ?", (service_name,)).fetchone()
+    if row is None:
+        abort(404, description=f"Entry '{service_name}' not found")
+    return jsonify(deserialize(row))
 
 # ── POST create a new catalog entry ──────────────────────────────────────────
 @app.route("/catalog", methods=["POST"])
