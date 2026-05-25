@@ -6,7 +6,7 @@
 ```
 curl -X POST http://localhost:5000/catalog \
   -H "Content-Type: application/json" \
-  -d @post_entry.json
+  -d @template_entry.json
 ```
 
 ### Deleting a catalog entry
