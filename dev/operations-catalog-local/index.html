@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operations Catalog</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f4;
+      color: #1c1917;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e7e5e4;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d4d4d4;
+    }
+    #status-dot.ok { background: #22c55e; }
+    #status-dot.err { background: #ef4444; }
+
+    #status-text {
+      font-size: 12px;
+      color: #78716c;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: calc(100vh - 56px);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: #fff;
+      border-right: 1px solid #e7e5e4;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-toolbar {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e7e5e4;
+      display: flex;
+      gap: 8px;
+    }
+
+    .sidebar-toolbar input {
+      flex: 1;
+      font-size: 13px;
+      padding: 6px 10px;
+      border: 1px solid #e7e5e4;
+      border-radius: 6px;
+      background: #fafaf9;
+      outline: none;
+    }
+
+    .sidebar-toolbar input:focus { border-color: #a8a29e; }
+
+    .sidebar-toolbar button {
+      font-size: 13px;
+      padding: 6px 12px;
+      border: 1px solid #e7e5e4;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .sidebar-toolbar button:hover { background: #f5f5f4; }
+
+    .entry-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .entry-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: 2px;
+    }
+
+    .entry-item:hover { background: #f5f5f4; }
+
+    .entry-item.active {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .entry-name {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .entry-meta {
+      font-size: 12px;
+      color: #78716c;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state {
+      padding: 24px 16px;
+      text-align: center;
+      color: #a8a29e;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── Detail panel ── */
+    .detail {
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .detail-placeholder {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #a8a29e;
+      gap: 8px;
+    }
+
+    .detail-placeholder svg { opacity: 0.3; }
+    .detail-placeholder p { font-size: 14px; }
+
+    .detail-card {
+      background: #fff;
+      border: 1px solid #e7e5e4;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 860px;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e7e5e4;
+      gap: 16px;
+    }
+
+    .detail-title { font-size: 20px; font-weight: 600; }
+    .detail-subtitle { font-size: 13px; color: #78716c; margin-top: 4px; }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-active   { background: #dcfce7; color: #15803d; }
+    .badge-inactive { background: #fee2e2; color: #b91c1c; }
+    .badge-default  { background: #f5f5f4; color: #57534e; }
+
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      background: #fafaf9;
+      border: 1px solid #e7e5e4;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #78716c;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      font-size: 13px;
+      color: #1c1917;
+      line-height: 1.6;
+    }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .tag {
+      font-size: 12px;
+      padding: 2px 10px;
+      background: #fff;
+      border: 1px solid #e7e5e4;
+      border-radius: 6px;
+      color: #57534e;
+    }
+
+    a.link {
+      color: #2563eb;
+      text-decoration: none;
+      font-size: 13px;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    a.link:hover { text-decoration: underline; }
+
+    .sla-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .sla-row { font-size: 12px; }
+    .sla-key { color: #78716c; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Operations Catalog</h1>
+  <div id="status-dot"></div>
+  <span id="status-text">Not connected</span>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-toolbar">
+      <input type="text" id="api-url" value="http://localhost:5000" placeholder="API base URL" />
+      <button onclick="loadCatalog()">Load</button>
+    </div>
+    <div class="entry-list" id="entry-list">
+      <div class="empty-state">Enter your API URL above and click Load.</div>
+    </div>
+  </aside>
+
+  <main class="detail" id="detail">
+    <div class="detail-placeholder">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+      </svg>
+      <p>Select an entry to view details</p>
+    </div>
+  </main>
+</div>
+
+<script>
+  let entries = [];
+  let selectedId = null;
+
+  async function loadCatalog() {
+    const base = document.getElementById('api-url').value.replace(/\/$/, '');
+    const list = document.getElementById('entry-list');
+    const dot  = document.getElementById('status-dot');
+    const txt  = document.getElementById('status-text');
+
+    list.innerHTML = '<div class="empty-state">Loading…</div>';
+    dot.className = '';
+    txt.textContent = 'Connecting…';
+
+    try {
+      const res = await fetch(base + '/catalog');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      entries = await res.json();
+      dot.className = 'ok';
+      txt.textContent = entries.length + ' entries loaded';
+      renderList();
+    } catch (e) {
+      dot.className = 'err';
+      txt.textContent = 'Connection failed';
+      list.innerHTML = `<div class="empty-state">Could not connect to <strong>${base}</strong>.<br><br>Make sure your API is running and flask-cors is enabled.</div>`;
+    }
+  }
+
+  function renderList() {
+    const list = document.getElementById('entry-list');
+    if (!entries.length) {
+      list.innerHTML = '<div class="empty-state">No entries found.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e => `
+      <div class="entry-item${selectedId === e.id ? ' active' : ''}" onclick="selectEntry(${e.id})">
+        <div class="entry-name">${esc(e.serviceName)}</div>
+        <div class="entry-meta">${esc(e.serviceCategory || '—')} · ${esc(e.status || 'Unknown')} · ${esc(e.health || '—')}</div>
+      </div>
+    `).join('');
+  }
+
+  function selectEntry(id) {
+    selectedId = id;
+    renderList();
+    const e = entries.find(x => x.id === id);
+    if (e) renderDetail(e);
+  }
+
+  function renderDetail(e) {
+    const status = (e.status || '').toLowerCase();
+    const badgeClass = status === 'active' ? 'badge-active' : status === 'inactive' ? 'badge-inactive' : 'badge-default';
+
+    document.getElementById('detail').innerHTML = `
+      <div class="detail-card">
+        <div class="detail-header">
+          <div>
+            <div class="detail-title">${esc(e.serviceName)}</div>
+            <div class="detail-subtitle">${esc(e.serviceCategory || 'Uncategorized')}</div>
+          </div>
+          <span class="badge ${badgeClass}">${esc(e.status || 'Unknown')}</span>
+          <span class="badge ${healthBadgeClass(e.health)}">${esc(e.health || 'Unknown')}</span>
+        </div>
+        <div class="fields">
+          ${field('Description', e.description, true)}
+          ${field('Health', e.health)}
+          ${field('Target audience', e.targetAudience)}
+          ${field('Requests channel', e.requestsChannel)}
+          ${field('Incident management', e.incidentManagement)}
+          ${field('Monitoring tools', e.monitoringTools)}
+          ${field('Maintenance windows', e.activeMaintenanceWindows)}
+          ${field('Cost model', e.costModel)}
+          ${field('Version info', e.versionInformation)}
+          ${field('Deprecation policy', e.deprecationPolicy)}
+          ${tagsField('Subject matter experts', e.serviceSubjectMatterExperts)}
+          ${tagsField('Critical dependencies', e.criticalDependencies)}
+          ${linksField('Documentation', e.documentation)}
+          ${slaField(e.SLA)}
+          ${e.onboardingDocumentation ? linkField('Onboarding docs', e.onboardingDocumentation) : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function field(label, val, full) {
+    if (!val) return '';
+    return `<div class="field${full ? ' full' : ''}">
+      <div class="field-label">${label}</div>
+      <div class="field-value">${esc(val)}</div>
+    </div>`;
+  }
+
+  function tagsField(label, arr) {
+    if (!arr || !arr.length) return '';
+    const tags = arr.map(t => `<span class="tag">${esc(t)}</span>`).join('');
+    return `<div class="field">
+      <div class="field-label">${label}</div>
+      <div class="tag-list" style="margin-top:4px">${tags}</div>
+    </div>`;
+  }
+
+  function healthBadgeClass(health) {
+    switch ((health || '').toLowerCase()) {
+      case 'healthy':  return 'badge-active';
+      case 'degraded': return 'badge-default';
+      case 'down':     return 'badge-inactive';
+      default:         return 'badge-default';
+    }
+  }
+
+  function linksField(label, arr) {
+    if (!arr || !arr.length) return '';
+    const links = arr.map(l => `<a class="link" href="${esc(l)}" target="_blank">${esc(l)}</a>`).join('');
+    return `<div class="field full">
+      <div class="field-label">${label}</div>
+      <div style="margin-top:4px">${links}</div>
+    </div>`;
+  }
+
+  function linkField(label, url) {
+    return `<div class="field">
+      <div class="field-label">${label}</div>
+      <a class="link" href="${esc(url)}" target="_blank" style="margin-top:4px">${esc(url)}</a>
+    </div>`;
+  }
+
+  function slaField(sla) {
+    if (!sla || !Object.keys(sla).length) return '';
+    const rows = Object.entries(sla).map(([k, v]) =>
+      `<div class="sla-row"><span class="sla-key">${esc(k)}: </span>${esc(v)}</div>`
+    ).join('');
+    return `<div class="field full">
+      <div class="field-label">SLA</div>
+      <div class="sla-grid" style="margin-top:4px">${rows}</div>
+    </div>`;
+  }
+</script>
+</body>
+</html>
