@@ -22,21 +22,9 @@ source .env
 
 ### 1. Install Postgres and create the database
 
-```bash
-DLETELET ALLLL THISISSSSS WITHE SETUPDB FILE THERE
-brew install postgresql@15
-brew services start postgresql@15
-
-# Create database and user
-psql postgres
-CREATE DATABASE catalog;
-\l
-CREATE USER $PGUSER WITH PASSWORD $PGPASSWORD;
-GRANT ALL PRIVILEGES ON DATABASE catalog TO catalog_user;
-\q
 ```
-```
-chmod +x setup_db.py
+cd dev/operations-catalog-local/
+./setup_db.py
 ```
 
 ### 2. Install dependencies and run
@@ -115,7 +103,8 @@ helm install operations-catalog ./helm/operations-catalog-api \
 \du 
 
 # back in the directory with values from above
-pg_dump -h localhost -U your_username -d mydb > backup.sql
+cd dev/operations-catalog-local
+pg_dump -h localhost -U yourUserName -d catalog > db_backups/$(date -u +"%Y-%m-%dT%H:%M")_catalog_backup.sql
 ```
 
 ## Restore a local DB
