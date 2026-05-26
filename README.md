@@ -3,11 +3,26 @@
 
 ## API Actions
 
+### Get all catalog entries
+This will return all entries sorted by the catalog id number
+
+curl "http://localhost:5000/catalog" | jq '.[].serviceName'
+
+### Get a catalog entry
+A JSON response will be returned
+
+NOTE: The serviceName is case sensitive
+```
+curl "http://localhost:5000/catalog/name/yourServiceName"
+```
+
 ### Updating a field for one catalog entry
 Example
+```
 curl -X PUT http://localhost:5000/catalog/name/<serviceName> \
   -H "Content-Type: application/json" \
   -d '{"yourField": "yourValue"}'
+```
 
 ### Adding a new catalog entry
 ```
