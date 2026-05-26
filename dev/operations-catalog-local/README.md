@@ -6,19 +6,37 @@ A Flask + PostgreSQL service catalog REST API, packaged for Kubernetes with a He
 
 ## Local Setup
 
+### Setup local env 
+Create .env where your database.py is
+```
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=catalog
+PGUSER=yourUserName
+PGPASSWORD=yourPostgresPassword
+
+```
+```
+source .env
+```
+
 ### 1. Install Postgres and create the database
 
 ```bash
-# macOS
+DLETELET ALLLL THISISSSSS WITHE SETUPDB FILE THERE
 brew install postgresql@15
 brew services start postgresql@15
 
 # Create database and user
 psql postgres
 CREATE DATABASE catalog;
-CREATE USER catalog_user WITH PASSWORD 'catalog_pass';
+\l
+CREATE USER $PGUSER WITH PASSWORD $PGPASSWORD;
 GRANT ALL PRIVILEGES ON DATABASE catalog TO catalog_user;
 \q
+```
+```
+chmod +x setup_db.py
 ```
 
 ### 2. Install dependencies and run
@@ -89,3 +107,35 @@ helm install operations-catalog ./helm/operations-catalog-api \
 | `PUT` | `/catalog/name/<name>` | Update entry by serviceName |
 | `DELETE` | `/catalog/<id>` | Delete entry by ID |
 | `DELETE` | `/catalog/name/<name>` | Delete entry by serviceName |
+
+
+## Backup a local DB
+```
+# connected to DB
+\du 
+
+# back in the directory with values from above
+pg_dump -h localhost -U your_username -d mydb > backup.sql
+```
+
+## Restore a local DB
+
+If needed, drop the local db
+```
+psql -U bensmith_pf9 -d postgres -c "DROP DATABASE catalog;" 
+```
+
+Create the database
+```
+psql -U bensmith_pf9 -d postgres -c "CREATE DATABASE catalog;" 
+```
+
+Restore database
+```
+psql -U your_username -d mydb < backup.sql
+```
+
+Verify
+```
+psql -U your_username -d mydb -c "SELECT * FROM catalog;"
+```

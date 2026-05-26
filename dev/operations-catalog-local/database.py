@@ -2,6 +2,8 @@ import os
 import psycopg2
 import psycopg2.extras
 from flask import g
+from dotenv import load_dotenv
+load_dotenv()
 
 # Connection config from environment variables
 DB_CONFIG = {
