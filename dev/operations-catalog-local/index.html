@@ -318,7 +318,7 @@
     list.innerHTML = entries.map(e => `
       <div class="entry-item${selectedId === e.id ? ' active' : ''}" onclick="selectEntry(${e.id})">
         <div class="entry-name">${esc(e.serviceName)}</div>
-        <div class="entry-meta">${esc(e.serviceCategory || '—')} · ${esc(e.status || 'Unknown')} · ${esc(e.health || '—')}</div>
+        <div class="entry-meta">${esc(e.serviceCategory || '—')} · ${esc(e.status || 'Unknown')} · ${esc(getHealthValue(e.health, 'overall') || '—')}</div>
       </div>
     `).join('');
   }
@@ -342,11 +342,11 @@
             <div class="detail-subtitle">${esc(e.serviceCategory || 'Uncategorized')}</div>
           </div>
           <span class="badge ${badgeClass}">${esc(e.status || 'Unknown')}</span>
-          <span class="badge ${healthBadgeClass(e.health)}">${esc(e.health || 'Unknown')}</span>
+          <span class="badge ${healthBadgeClass(e.health)}">${esc(getHealthValue(e.health, 'overall') || 'Unknown')}</span>
         </div>
         <div class="fields">
           ${field('Description', e.description, true)}
-          ${field('Health', e.health)}
+          ${healthField(e.health)}
           ${field('Target audience', e.targetAudience)}
           ${field('Requests channel', e.requestsChannel)}
           ${field('Incident management', e.incidentManagement)}
@@ -386,15 +386,33 @@
     </div>`;
   }
 
+  function getHealthValue(health, key) {
+    if (!health || !Array.isArray(health)) return null;
+    const entry = health.find(h => h.key === key);
+    return entry ? entry.value : null;
+  }
+
   function healthBadgeClass(health) {
-    switch ((health || '').toLowerCase()) {
-      case 'healthy':  return 'badge-active';
-      case 'degraded': return 'badge-default';
-      case 'down':     return 'badge-inactive';
-      default:         return 'badge-default';
+    const overall = getHealthValue(health, 'overall');
+    switch ((overall || '').toLowerCase()) {
+      case 'green':  return 'badge-active';
+      case 'yellow': return 'badge-default';
+      case 'red':    return 'badge-inactive';
+      default:       return 'badge-default';
     }
   }
 
+  function healthField(health) {
+    if (!health || !Array.isArray(health)) return '';
+    const tags = health.map(h =>
+      `<span class="tag">${esc(h.key)}: ${esc(h.value)}</span>`
+    ).join('');
+    return `<div class="field">
+      <div class="field-label">Health</div>
+      <div class="tag-list" style="margin-top:4px">${tags}</div>
+    </div>`;
+  }
+  
   function linksField(label, arr) {
     if (!arr || !arr.length) return '';
     const links = arr.map(l => `<a class="link" href="${esc(l)}" target="_blank">${esc(l)}</a>`).join('');

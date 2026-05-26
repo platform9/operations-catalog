@@ -18,7 +18,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS catalog (
     id                          SERIAL PRIMARY KEY,
     "serviceName"               TEXT NOT NULL,
-    health                      TEXT,
+    health                      JSONB,
     description                 TEXT,
     status                      TEXT,
     "serviceCategory"           TEXT,
