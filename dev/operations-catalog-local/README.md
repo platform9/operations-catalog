@@ -120,22 +120,23 @@ pg_dump -h localhost -U your_username -d mydb > backup.sql
 
 ## Restore a local DB
 
-If needed, drop the local db
+If needed, drop the local db and then recreate it
 ```
-psql -U bensmith_pf9 -d postgres -c "DROP DATABASE catalog;" 
-```
-
-Create the database
-```
-psql -U bensmith_pf9 -d postgres -c "CREATE DATABASE catalog;" 
+psql -U your_username -d postgres -c "DROP DATABASE catalog;"
+psql -U your_username -d postgres -c "CREATE DATABASE catalog;"
 ```
 
 Restore database
 ```
-psql -U your_username -d mydb < backup.sql
+psql -U your_username -d catalog < catalog_backup.sql
+```
+
+If you need to restart the flask UI
+```
+python app.py
 ```
 
 Verify
 ```
-psql -U your_username -d mydb -c "SELECT * FROM catalog;"
+psql -U your_username -d catalog -c "SELECT * FROM catalog;"
 ```
