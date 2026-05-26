@@ -5,8 +5,9 @@
 
 ### Get all catalog entries
 This will return all entries sorted by the catalog id number
-
+```
 curl "http://localhost:5000/catalog" | jq '.[].serviceName'
+```
 
 ### Get a catalog entry
 A JSON response will be returned
