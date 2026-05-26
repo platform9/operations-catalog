@@ -27,11 +27,17 @@ GRANT ALL PRIVILEGES ON DATABASE catalog TO catalog_user;
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-# Optional: seed with sample data
+### Only for local dev testing
+
+```
+# refer to template-entry.json and entry upload examples first
 python seed.py
+```
 
 # Start the server
+```
 python app.py
 # → http://localhost:5000
 ```

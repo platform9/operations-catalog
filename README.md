@@ -3,6 +3,11 @@
 
 ## API Actions
 
+### API Status Page
+```
+curl "http://localhost:5000/healthz"
+```
+
 ### Get all catalog entries
 This will return all entries sorted by the catalog id number
 ```
