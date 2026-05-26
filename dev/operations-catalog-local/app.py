@@ -2,6 +2,7 @@ import json
 from flask import Flask, jsonify, request, abort, send_file, g
 from flask_cors import CORS
 from database import get_db, init_db, row_to_dict
+from groundcover import get_service_health, get_single_check
 
 app = Flask(__name__)
 CORS(app)
@@ -241,6 +242,27 @@ def delete_catalog_entry_by_name(service_name):
         cur.execute('DELETE FROM catalog WHERE "serviceName" = %s', (service_name,))
         conn.commit()
     return jsonify({"deleted": service_name})
+
+# ── Health checks (groundcover) ───────────────────────────────────────────────
+@app.route("/catalog/name/<string:service_name>/health", methods=["GET"])
+def get_service_health_checks(service_name):
+    try:
+        result = get_service_health(service_name)
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch health data: {str(e)}"}), 502
+    return jsonify(result)
+
+
+@app.route("/catalog/name/<string:service_name>/health/<string:check_name>", methods=["GET"])
+def get_single_health_check(service_name, check_name):
+    try:
+        check = get_single_check(service_name, check_name)
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch health data: {str(e)}"}), 502
+    if check is None:
+        abort(404, description=f"Check '{check_name}' not found for service '{service_name}'")
+    return jsonify(check)
+
 
 # ── Diagrams ────────────────────────────────────────────────────────────
 @app.route("/docs")
