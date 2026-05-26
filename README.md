@@ -24,7 +24,7 @@ curl -X PUT http://localhost:5000/catalog/name/<serviceName> \
   -d '{"yourField": "yourValue"}'
 ```
 
-### Adding a new catalog entry
+### Add a new catalog entry
 ```
 curl -X POST http://localhost:5000/catalog \
   -H "Content-Type: application/json" \
