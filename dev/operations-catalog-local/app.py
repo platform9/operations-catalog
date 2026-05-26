@@ -242,6 +242,11 @@ def delete_catalog_entry_by_name(service_name):
         conn.commit()
     return jsonify({"deleted": service_name})
 
+# ── Diagrams ────────────────────────────────────────────────────────────
+@app.route("/docs")
+def docs():
+    return send_file("catalog_api_diagrams.html")
+
 
 # ── Error handlers ────────────────────────────────────────────────────────────
 @app.errorhandler(400)

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Operations Catalog — API Diagrams</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: #fff;
+      color: #172b4d;
+      padding: 40px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #172b4d;
+      margin-bottom: 6px;
+    }
+
+    .doc-meta {
+      font-size: 13px;
+      color: #6b778c;
+      margin-bottom: 40px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #dfe1e6;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #172b4d;
+      margin: 40px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #dfe1e6;
+    }
+
+    p.desc {
+      font-size: 13px;
+      color: #6b778c;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .diagram-card {
+      background: #f4f5f7;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+
+    svg { width: 100%; height: auto; display: block; }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: #0052cc;
+      color: #fff;
+    }
+
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:nth-child(odd)  { background: #fff; }
+    tbody tr:nth-child(even) { background: #f4f5f7; }
+
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #dfe1e6;
+      vertical-align: middle;
+    }
+
+    .method {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: #fff;
+      letter-spacing: 0.04em;
+    }
+
+    .m-get    { background: #00875a; }
+    .m-post   { background: #0052cc; }
+    .m-put    { background: #ff991f; color: #172b4d; }
+    .m-delete { background: #de350b; }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .badge-pk   { background: #fff0b3; color: #172b4d; border: 1px solid #ffc400; }
+    .badge-nn   { background: #ffebe6; color: #de350b; border: 1px solid #ff8f73; }
+    .badge-jsonb { background: #e3fcef; color: #006644; border: 1px solid #57d9a3; }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      background: #f4f5f7;
+      border: 1px solid #dfe1e6;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #172b4d;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #6b778c;
+      background: #fffae6;
+      border-left: 3px solid #ffc400;
+      padding: 10px 14px;
+      border-radius: 0 4px 4px 0;
+      margin-top: 12px;
+    }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .flow-step {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    .flow-label {
+      width: 90px;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b778c;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 14px;
+    }
+
+    .flow-box {
+      flex: 1;
+      border-radius: 4px;
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    .flow-box strong {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    .flow-box span {
+      font-size: 12px;
+      color: #6b778c;
+    }
+
+    .flow-arrow {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      align-items: center;
+    }
+
+    .flow-arrow-spacer { width: 90px; flex-shrink: 0; }
+
+    .flow-arrow-line {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .flow-arrow-line svg { width: 20px; height: 20px; }
+
+    .flow-branch {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .flow-branch-spacer { width: 90px; flex-shrink: 0; }
+
+    .branch-box {
+      flex: 1;
+      border-radius: 4px;
+      padding: 10px 16px;
+      font-size: 12px;
+    }
+
+    .branch-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    /* Colors */
+    .c-purple { background: #eae6ff; border: 1px solid #998dd9; }
+    .c-purple strong { color: #403294; }
+    .c-teal   { background: #e3fcef; border: 1px solid #57d9a3; }
+    .c-teal strong { color: #006644; }
+    .c-blue   { background: #deebff; border: 1px solid #4c9aff; }
+    .c-blue strong { color: #0052cc; }
+    .c-gray   { background: #f4f5f7; border: 1px solid #c1c7d0; }
+    .c-gray strong { color: #172b4d; }
+    .c-red    { background: #ffebe6; border: 1px solid #ff8f73; }
+    .c-red strong { color: #bf2600; }
+
+    .branch-success { background: #e3fcef; border: 1px solid #57d9a3; }
+    .branch-success .branch-label { color: #006644; }
+    .branch-error   { background: #ffebe6; border: 1px solid #ff8f73; }
+    .branch-error   .branch-label { color: #bf2600; }
+
+    @media print {
+      body { padding: 20px; }
+      h2 { page-break-before: always; }
+      h2:first-of-type { page-break-before: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Operations Catalog — API Reference</h1>
+<div class="doc-meta">
+  Service: Operations Catalog API &nbsp;·&nbsp;
+  Base URL: <code>http://localhost:5000</code> &nbsp;·&nbsp;
+  Framework: Flask + psycopg2 &nbsp;·&nbsp;
+  Database: PostgreSQL
+</div>
+
+<!-- ── 1. Endpoint Map ─────────────────────────────────────────── -->
+<h2>1. Endpoint map</h2>
+<p class="desc">All available routes, HTTP methods, and a short description of each operation.</p>
+
+<div class="diagram-card">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:80px">Method</th>
+        <th style="width:280px">Route</th>
+        <th>Description</th>
+        <th style="width:120px">Response</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="method m-get">GET</span></td>
+        <td><code>/healthz</code></td>
+        <td>Database connectivity check</td>
+        <td><code>200 {status}</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-get">GET</span></td>
+        <td><code>/catalog</code></td>
+        <td>Returns all catalog entries ordered by id</td>
+        <td><code>200 [ ]</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-post">POST</span></td>
+        <td><code>/catalog</code></td>
+        <td>Creates a new entry — <code>serviceName</code> required</td>
+        <td><code>201 { }</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-get">GET</span></td>
+        <td><code>/catalog/:id</code></td>
+        <td>Returns a single entry by numeric id</td>
+        <td><code>200 { }</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-put">PUT</span></td>
+        <td><code>/catalog/:id</code></td>
+        <td>Full update of an entry by numeric id</td>
+        <td><code>200 { }</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-delete">DELETE</span></td>
+        <td><code>/catalog/:id</code></td>
+        <td>Deletes an entry by numeric id</td>
+        <td><code>200 {deleted}</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-get">GET</span></td>
+        <td><code>/catalog/name/:name</code></td>
+        <td>Returns a single entry by serviceName</td>
+        <td><code>200 { }</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-put">PUT</span></td>
+        <td><code>/catalog/name/:name</code></td>
+        <td>Full update of an entry by serviceName</td>
+        <td><code>200 { }</code></td>
+      </tr>
+      <tr>
+        <td><span class="method m-delete">DELETE</span></td>
+        <td><code>/catalog/name/:name</code></td>
+        <td>Deletes an entry by serviceName</td>
+        <td><code>200 {deleted}</code></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note">⚠ <strong>/catalog/name/:name</strong> routes are case-sensitive. Use <code>LOWER("serviceName") = LOWER(%s)</code> in the query to make lookups case-insensitive.</div>
+</div>
+
+
+<!-- ── 2. Request / Response Flow ─────────────────────────────── -->
+<h2>2. Request / response flow</h2>
+<p class="desc">How a request travels from the client through Flask middleware and into Postgres, then returns as JSON.</p>
+
+<div class="diagram-card">
+  <div class="flow">
+
+    <div class="flow-step">
+      <div class="flow-label">Client</div>
+      <div class="flow-box c-purple">
+        <strong>index.html — browser fetch()</strong>
+        <span>HTTP request with JSON body (where applicable)</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">Middleware</div>
+      <div class="flow-box c-teal">
+        <strong>before_request — init_db()</strong>
+        <span>Creates the catalog table if it does not exist</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">Flask</div>
+      <div class="flow-box c-teal">
+        <strong>Route handler</strong>
+        <span>Matched by method + path — GET / POST / PUT / DELETE</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">DB layer</div>
+      <div class="flow-box c-blue">
+        <strong>get_db() via Flask g</strong>
+        <span>Per-request psycopg2 connection — reused within the same request</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">Postgres</div>
+      <div class="flow-box c-blue">
+        <strong>catalog table</strong>
+        <span>SQL executed — rows returned or written</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">Serialize</div>
+      <div class="flow-box c-gray">
+        <strong>deserialize(row_to_dict())</strong>
+        <span>JSONB string fields parsed back into Python dicts / lists</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">Teardown</div>
+      <div class="flow-box c-gray">
+        <strong>teardown_appcontext — close_db()</strong>
+        <span>Connection closed after each request completes</span>
+      </div>
+    </div>
+
+    <div class="flow-arrow">
+      <div class="flow-arrow-spacer"></div>
+      <div class="flow-arrow-line">
+        <svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-label">Response</div>
+      <div class="flow-box c-purple">
+        <strong>JSON response to client</strong>
+        <span>200 / 201 with entry data, or 400 / 404 with error detail</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── 3. Schema ───────────────────────────────────────────────── -->
+<h2>3. Catalog table schema</h2>
+<p class="desc">PostgreSQL table definition. JSONB fields are stored as structured JSON and deserialized on read.</p>
+
+<div class="diagram-card">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:220px">Column</th>
+        <th style="width:100px">Type</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>id</code></td>
+        <td>SERIAL</td>
+        <td><span class="badge badge-pk">PRIMARY KEY</span> Auto-incrementing integer</td>
+      </tr>
+      <tr>
+        <td><code>serviceName</code></td>
+        <td>TEXT</td>
+        <td><span class="badge badge-nn">NOT NULL</span> Unique name of the service</td>
+      </tr>
+      <tr>
+        <td><code>health</code></td>
+        <td>JSONB</td>
+        <td><span class="badge badge-jsonb">JSONB</span> Array of <code>{key, value}</code> pairs — e.g. overall, inMaintenance</td>
+      </tr>
+      <tr>
+        <td><code>description</code></td>
+        <td>TEXT</td>
+        <td>Human-readable description of the service</td>
+      </tr>
+      <tr>
+        <td><code>status</code></td>
+        <td>TEXT</td>
+        <td>e.g. <code>Active</code>, <code>TBD</code></td>
+      </tr>
+      <tr>
+        <td><code>serviceCategory</code></td>
+        <td>TEXT</td>
+        <td>e.g. Operated Services, Supported Services</td>
+      </tr>
+      <tr>
+        <td><code>serviceSubjectMatterExperts</code></td>
+        <td>JSONB</td>
+        <td><span class="badge badge-jsonb">JSONB</span> String array of team or person names</td>
+      </tr>
+      <tr>
+        <td><code>criticalDependencies</code></td>
+        <td>JSONB</td>
+        <td><span class="badge badge-jsonb">JSONB</span> String array of dependency names</td>
+      </tr>
+      <tr>
+        <td><code>documentation</code></td>
+        <td>JSONB</td>
+        <td><span class="badge badge-jsonb">JSONB</span> String array of documentation URLs</td>
+      </tr>
+      <tr>
+        <td><code>SLA</code></td>
+        <td>JSONB</td>
+        <td><span class="badge badge-jsonb">JSONB</span> Object with availability, responseTimes, resolutionTargets</td>
+      </tr>
+      <tr>
+        <td><code>targetAudience</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>requestsChannel</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>incidentManagement</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>monitoringTools</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>activeMaintenanceWindows</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>onboardingDocumentation</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>costModel</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>versionInformation</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><code>deprecationPolicy</code></td>
+        <td>TEXT</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ── 4. PUT Flow ─────────────────────────────────────────────── -->
+<h2>4. PUT operation flow</h2>
+<p class="desc">Step-by-step data flow when updating an existing catalog entry. Applies to both <code>/catalog/:id</code> and <code>/catalog/name/:name</code>.</p>
+
+<div class="diagram-card">
+  <div class="flow">
+
+    <div class="flow-step">
+      <div class="flow-label">Client</div>
+      <div class="flow-box c-purple">
+        <strong>PUT request with JSON body</strong>
+        <span>Only the fields to update need to be included</span>
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-step">
+      <div class="flow-label">Flask</div>
+      <div class="flow-box c-teal">
+        <strong>Route matched</strong>
+        <span>PUT /catalog/:id  or  PUT /catalog/name/:name</span>
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-step">
+      <div class="flow-label">DB read</div>
+      <div class="flow-box c-blue">
+        <strong>SELECT existing row</strong>
+        <span>WHERE id = %s  or  WHERE "serviceName" = %s</span>
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-branch">
+      <div class="flow-branch-spacer"></div>
+      <div class="branch-box branch-success">
+        <div class="branch-label">✓ Found</div>
+        Proceeds to merge step
+      </div>
+      <div class="branch-box branch-error">
+        <div class="branch-label">✗ Not found</div>
+        Returns <code>404</code> with error detail
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-step">
+      <div class="flow-label">Merge</div>
+      <div class="flow-box c-gray">
+        <strong>current.update(data)</strong>
+        <span>Incoming fields overwrite existing values — unset fields are preserved</span>
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-step">
+      <div class="flow-label">Serialize</div>
+      <div class="flow-box c-gray">
+        <strong>json.dumps() on JSONB fields</strong>
+        <span>SLA, documentation, criticalDependencies, serviceSubjectMatterExperts</span>
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-step">
+      <div class="flow-label">DB write</div>
+      <div class="flow-box c-blue">
+        <strong>UPDATE catalog SET … WHERE id = %s</strong>
+        <span>All columns written — conn.commit()</span>
+      </div>
+    </div>
+    <div class="flow-arrow"><div class="flow-arrow-spacer"></div><div class="flow-arrow-line"><svg viewBox="0 0 20 20"><line x1="10" y1="0" x2="10" y2="14" stroke="#6b778c" stroke-width="1.5"/><polygon points="5,12 10,20 15,12" fill="#6b778c"/></svg></div></div>
+
+    <div class="flow-step">
+      <div class="flow-label">Response</div>
+      <div class="flow-box c-purple">
+        <strong>200 — full updated entry returned as JSON</strong>
+        <span>Re-fetched from DB after commit to reflect the saved state</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
