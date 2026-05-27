@@ -58,7 +58,6 @@ python app.py
 | `PGUSER` | `catalog_user` |
 | `PGPASSWORD` | `catalog_pass` |
 | `PROMETHEUS_URL` | (required) Prometheus base URL, e.g. `http://prometheus:9090` |
-| `LOKI_URL` | (required) Loki base URL, e.g. `http://loki:3100` |
 | `PROMETHEUS_PUSHGATEWAY_URL` | (required for producers) Pushgateway URL, e.g. `http://pushgateway:9091` |
 
 ---

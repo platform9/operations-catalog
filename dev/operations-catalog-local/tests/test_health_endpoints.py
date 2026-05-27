@@ -5,15 +5,14 @@ MOCK_HEALTH = {
     "service": "bork",
     "overall_status": "warn",
     "checks": [
-        {"check_name": "db_connectivity", "status": "pass", "detail": "ok", "last_updated": "2026-05-26T10:00:00Z"},
-        {"check_name": "queue_consumer", "status": "warn", "detail": "lag at 4500", "last_updated": "2026-05-26T09:58:00Z"},
+        {"check_name": "db_connectivity", "status": "pass", "last_updated": "2026-05-26T10:00:00Z"},
+        {"check_name": "queue_consumer", "status": "warn", "last_updated": "2026-05-26T09:58:00Z"},
     ],
 }
 
 MOCK_CHECK = {
     "check_name": "db_connectivity",
     "status": "pass",
-    "detail": "ok",
     "last_updated": "2026-05-26T10:00:00Z",
 }
 
@@ -29,7 +28,7 @@ def test_get_service_health_returns_200(client):
 
 
 def test_get_service_health_returns_502_on_error(client):
-    with patch("app.get_service_health", side_effect=Exception("groundcover unavailable")):
+    with patch("app.get_service_health", side_effect=Exception("prometheus unavailable")):
         resp = client.get("/catalog/name/bork/health")
         assert resp.status_code == 502
         assert "error" in resp.get_json()
@@ -51,7 +50,7 @@ def test_get_single_health_check_returns_404_when_not_found(client):
 
 
 def test_get_single_health_check_returns_502_on_error(client):
-    with patch("app.get_single_check", side_effect=Exception("groundcover unavailable")):
+    with patch("app.get_single_check", side_effect=Exception("prometheus unavailable")):
         resp = client.get("/catalog/name/bork/health/db_connectivity")
         assert resp.status_code == 502
         assert "error" in resp.get_json()
