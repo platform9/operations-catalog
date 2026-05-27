@@ -57,10 +57,9 @@ python app.py
 | `PGDATABASE` | `catalog` |
 | `PGUSER` | `catalog_user` |
 | `PGPASSWORD` | `catalog_pass` |
-| `GROUNDCOVER_METRICS_URL` | (required) PromQL endpoint base URL, e.g. `https://your-instance/metrics` |
-| `GROUNDCOVER_LOGS_URL` | (required) Loki-compatible log endpoint base URL, e.g. `https://your-instance` |
-| `GROUNDCOVER_API_KEY` | (required) API key for groundcover auth |
-| `GROUNDCOVER_OTLP_ENDPOINT` | (required for producers) OTLP base URL, e.g. `https://your-instance/otlp` |
+| `PROMETHEUS_URL` | (required) Prometheus base URL, e.g. `http://prometheus:9090` |
+| `LOKI_URL` | (required) Loki base URL, e.g. `http://loki:3100` |
+| `PROMETHEUS_PUSHGATEWAY_URL` | (required for producers) Pushgateway URL, e.g. `http://pushgateway:9091` |
 
 ---
 
@@ -105,7 +104,7 @@ helm install operations-catalog ./helm/operations-catalog-api \
 
 ## Pushing Health Checks
 
-Use `push_health_check.py` to push a named health check result into groundcover:
+Use `push_health_check.py` to push a named health check result into Prometheus + Loki:
 
 ```bash
 python push_health_check.py <service> <check_name> <pass|warn|fail> [detail]
@@ -118,18 +117,18 @@ python push_health_check.py bork queue_consumer warn "Consumer lag at 4500 messa
 python push_health_check.py bork db_connectivity fail "Connection refused"
 ```
 
-Requires `GROUNDCOVER_OTLP_ENDPOINT` and `GROUNDCOVER_API_KEY` to be set. Each push writes two OTel signals to groundcover: a gauge metric (for alerting/dashboards) and a structured log event (for detail text).
+Requires `PROMETHEUS_PUSHGATEWAY_URL` and `LOKI_URL` to be set. Each push writes a gauge metric to the Prometheus Pushgateway (for alerting/dashboards) and a structured JSON log event to Loki (for detail text).
 
 `check_name` must be consistent across pushes — use snake_case identifiers (e.g. `db_connectivity`, not `DB Connectivity`).
 
-### Updating the groundcover dashboard link
+### Updating the Prometheus dashboard link
 
-The `health` field on each catalog entry now stores a URL to the service's groundcover dashboard (not check state — check state lives in groundcover). Update existing entries via the existing PUT endpoint:
+The `health` field on each catalog entry stores a URL to the service's Prometheus/Grafana dashboard (not check state — check state lives in Prometheus + Loki). Update existing entries via the existing PUT endpoint:
 
 ```bash
 curl -X PUT http://localhost:5000/catalog/name/bork \
   -H "Content-Type: application/json" \
-  -d '{"health": "https://your-groundcover-instance/service/bork"}'
+  -d '{"health": "https://your-grafana/d/service-health?var-service=bork"}'
 ```
 
 

@@ -2,7 +2,7 @@ import json
 from flask import Flask, jsonify, request, abort, send_file, g
 from flask_cors import CORS
 from database import get_db, init_db, row_to_dict
-from groundcover import get_service_health, get_single_check
+from health_store import get_service_health, get_single_check
 
 app = Flask(__name__)
 CORS(app)

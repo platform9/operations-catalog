@@ -1,64 +1,60 @@
 import json
-import logging
 import os
+import requests
 from datetime import datetime, timezone
 
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
-from opentelemetry import _logs as otel_logs
+from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 
-GROUNDCOVER_OTLP_ENDPOINT = os.environ.get("GROUNDCOVER_OTLP_ENDPOINT", "")
-GROUNDCOVER_API_KEY = os.environ.get("GROUNDCOVER_API_KEY", "")
+PROMETHEUS_PUSHGATEWAY_URL = os.environ.get("PROMETHEUS_PUSHGATEWAY_URL", "")
+LOKI_URL = os.environ.get("LOKI_URL", "")
 
 STATUS_VALUES = {"pass": 0, "warn": 1, "fail": 2}
-
-
-def _headers():
-    return {"Authorization": f"Bearer {GROUNDCOVER_API_KEY}"}
 
 
 def push_health_check(service_name: str, check_name: str, status: str, detail: str = "") -> None:
     if status not in STATUS_VALUES:
         raise ValueError(f"status must be one of {list(STATUS_VALUES.keys())}, got '{status}'")
 
-    timestamp = datetime.now(timezone.utc).isoformat()
-    headers = _headers()
+    timestamp = datetime.now(timezone.utc)
 
-    metric_exporter = OTLPMetricExporter(
-        endpoint=f"{GROUNDCOVER_OTLP_ENDPOINT}/v1/metrics",
-        headers=headers,
+    # Push metric to Prometheus Pushgateway
+    registry = CollectorRegistry()
+    gauge = Gauge(
+        "service_health_check_status",
+        "Health check status: 0=pass, 1=warn, 2=fail",
+        labelnames=["service", "check_name"],
+        registry=registry,
     )
-    reader = PeriodicExportingMetricReader(metric_exporter, export_interval_millis=500)
-    meter_provider = MeterProvider(metric_readers=[reader])
-    gauge = meter_provider.get_meter("health_checks").create_gauge("service_health_check_status")
-    gauge.set(STATUS_VALUES[status], {"service": service_name, "check_name": check_name})
-    meter_provider.force_flush()
-    meter_provider.shutdown()
+    gauge.labels(service=service_name, check_name=check_name).set(STATUS_VALUES[status])
+    push_to_gateway(PROMETHEUS_PUSHGATEWAY_URL, job="health_checks", registry=registry)
 
-    log_exporter = OTLPLogExporter(
-        endpoint=f"{GROUNDCOVER_OTLP_ENDPOINT}/v1/logs",
-        headers=headers,
+    # Push log event to Loki
+    payload = {
+        "streams": [
+            {
+                "stream": {"service": service_name, "check_name": check_name},
+                "values": [
+                    [
+                        str(int(timestamp.timestamp() * 1e9)),
+                        json.dumps({
+                            "service": service_name,
+                            "check_name": check_name,
+                            "status": status,
+                            "detail": detail,
+                            "timestamp": timestamp.isoformat(),
+                        }),
+                    ]
+                ],
+            }
+        ]
+    }
+    resp = requests.post(
+        f"{LOKI_URL}/loki/api/v1/push",
+        json=payload,
+        headers={"Content-Type": "application/json"},
+        timeout=10,
     )
-    log_provider = LoggerProvider()
-    log_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
-    otel_logs.set_logger_provider(log_provider)
-    handler = LoggingHandler(level=logging.DEBUG, logger_provider=log_provider)
-    logger = logging.getLogger(f"health_checks.{service_name}.{check_name}")
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-    logger.info(json.dumps({
-        "service": service_name,
-        "check_name": check_name,
-        "status": status,
-        "detail": detail,
-        "timestamp": timestamp,
-    }))
-    log_provider.force_flush()
-    log_provider.shutdown()
+    resp.raise_for_status()
 
 
 if __name__ == "__main__":

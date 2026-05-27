@@ -3,22 +3,17 @@ import os
 import requests
 from datetime import datetime, timedelta, timezone
 
-GROUNDCOVER_METRICS_URL = os.environ.get("GROUNDCOVER_METRICS_URL", "")
-GROUNDCOVER_LOGS_URL = os.environ.get("GROUNDCOVER_LOGS_URL", "")
-GROUNDCOVER_API_KEY = os.environ.get("GROUNDCOVER_API_KEY", "")
+PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "")
+LOKI_URL = os.environ.get("LOKI_URL", "")
 
 STATUS_MAP = {0: "pass", 1: "warn", 2: "fail"}
 STATUS_RANK = {"pass": 0, "warn": 1, "fail": 2}
 
 
-def _auth_headers():
-    return {"Authorization": f"Bearer {GROUNDCOVER_API_KEY}"}
-
-
 def _query_metrics(service_name):
-    url = f"{GROUNDCOVER_METRICS_URL}/api/v1/query"
+    url = f"{PROMETHEUS_URL}/api/v1/query"
     query = f'service_health_check_status{{service="{service_name}"}}'
-    resp = requests.get(url, params={"query": query}, headers=_auth_headers(), timeout=10)
+    resp = requests.get(url, params={"query": query}, timeout=10)
     resp.raise_for_status()
     results = {}
     for result in resp.json().get("data", {}).get("result", []):
@@ -30,7 +25,7 @@ def _query_metrics(service_name):
 
 
 def _query_logs(service_name):
-    url = f"{GROUNDCOVER_LOGS_URL}/loki/api/v1/query_range"
+    url = f"{LOKI_URL}/loki/api/v1/query_range"
     now = datetime.now(timezone.utc)
     start = now - timedelta(hours=24)
     params = {
@@ -40,7 +35,7 @@ def _query_logs(service_name):
         "limit": 1000,
         "direction": "backward",
     }
-    resp = requests.get(url, params=params, headers=_auth_headers(), timeout=10)
+    resp = requests.get(url, params=params, timeout=10)
     resp.raise_for_status()
     seen = {}
     for stream in resp.json().get("data", {}).get("result", []):
