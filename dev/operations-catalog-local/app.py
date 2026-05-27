@@ -243,7 +243,7 @@ def delete_catalog_entry_by_name(service_name):
         conn.commit()
     return jsonify({"deleted": service_name})
 
-# ── Health checks (groundcover) ───────────────────────────────────────────────
+# ── Health checks ─────────────────────────────────────────────────────────────
 @app.route("/catalog/name/<string:service_name>/health", methods=["GET"])
 def get_service_health_checks(service_name):
     try:
