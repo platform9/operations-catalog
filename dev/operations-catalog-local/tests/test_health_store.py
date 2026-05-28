@@ -86,3 +86,28 @@ def test_get_single_check_returns_none_for_unknown():
         import health_store
         result = health_store.get_single_check("bork", "nonexistent_check")
         assert result is None
+
+
+def test_enrich_entry_replaces_health_on_success():
+    mock_health = {
+        "service": "bork",
+        "overall_status": "pass",
+        "checks": [{"check_name": "db_connectivity", "status": "pass", "last_updated": "2026-05-27T10:00:00+00:00"}],
+    }
+    with patch("health_store.get_service_health", return_value=mock_health):
+        import health_store
+        entry = {"serviceName": "bork", "health": "http://grafana/bork", "description": "test"}
+        result = health_store.enrich_entry(entry)
+        assert result["health"]["prom_health"] == "green"
+        assert result["health"]["overall_status"] == "pass"
+        assert result["health"]["checks"] == mock_health["checks"]
+        assert result["description"] == "test"  # other fields unchanged
+
+
+def test_enrich_entry_sets_prom_health_red_on_failure():
+    with patch("health_store.get_service_health", side_effect=Exception("connection refused")):
+        import health_store
+        entry = {"serviceName": "bork", "health": "http://grafana/bork", "description": "test"}
+        result = health_store.enrich_entry(entry)
+        assert result["health"] == {"prom_health": "red"}
+        assert result["description"] == "test"  # other fields unchanged
