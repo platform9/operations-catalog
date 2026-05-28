@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request, abort, send_file, g
 from flask_cors import CORS
 from database import get_db, init_db, row_to_dict
 from health_store import get_service_health, get_single_check, enrich_entry
+from push_health_check import push_health_check
 
 app = Flask(__name__)
 CORS(app)
@@ -262,6 +263,31 @@ def get_single_health_check(service_name, check_name):
     if check is None:
         abort(404, description=f"Check '{check_name}' not found for service '{service_name}'")
     return jsonify(check)
+
+
+@app.route("/catalog/name/<string:service_name>/health", methods=["POST"])
+def push_service_health_check(service_name):
+    data = request.get_json(force=True) or {}
+    check_name = (data.get("check_name") or "").strip()
+    status = data.get("status", "")
+
+    if not check_name:
+        return jsonify({"error": "'check_name' is required"}), 400
+    if status not in ("pass", "warn", "fail"):
+        return jsonify({"error": f"'status' must be one of pass, warn, fail; got '{status}'"}), 400
+
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute('SELECT id FROM catalog WHERE "serviceName" = %s', (service_name,))
+        if cur.fetchone() is None:
+            abort(404, description=f"Entry '{service_name}' not found")
+
+    try:
+        push_health_check(service_name, check_name, status)
+    except Exception as e:
+        return jsonify({"error": f"Failed to push health check: {str(e)}"}), 502
+
+    return jsonify({"pushed": True, "service": service_name, "check_name": check_name, "status": status})
 
 
 # ── Diagrams ────────────────────────────────────────────────────────────
