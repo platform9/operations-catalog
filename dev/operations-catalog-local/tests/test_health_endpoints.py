@@ -97,3 +97,57 @@ def test_get_by_id_health_is_enriched(client):
         resp = client.get("/catalog/1")
         assert resp.status_code == 200
         assert resp.get_json()["health"] == ENRICHED_HEALTH
+
+
+def _make_push_db_mock(found=True):
+    mock_cursor = MagicMock()
+    mock_cursor.__enter__ = lambda s: s
+    mock_cursor.__exit__ = MagicMock(return_value=False)
+    mock_cursor.fetchone.return_value = (1,) if found else None
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    return mock_conn
+
+
+def test_push_health_check_returns_200(client):
+    with patch("app.get_db", return_value=_make_push_db_mock(found=True)), \
+         patch("app.push_health_check"):
+        resp = client.post(
+            "/catalog/name/bork/health",
+            json={"check_name": "db_connectivity", "status": "pass"},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["pushed"] is True
+        assert data["service"] == "bork"
+        assert data["check_name"] == "db_connectivity"
+        assert data["status"] == "pass"
+
+
+def test_push_health_check_returns_404_when_service_missing(client):
+    with patch("app.get_db", return_value=_make_push_db_mock(found=False)):
+        resp = client.post(
+            "/catalog/name/nonexistent/health",
+            json={"check_name": "db_connectivity", "status": "pass"},
+        )
+        assert resp.status_code == 404
+
+
+def test_push_health_check_returns_400_on_invalid_status(client):
+    resp = client.post(
+        "/catalog/name/bork/health",
+        json={"check_name": "db_connectivity", "status": "broken"},
+    )
+    assert resp.status_code == 400
+    assert "error" in resp.get_json()
+
+
+def test_push_health_check_returns_502_on_pushgateway_failure(client):
+    with patch("app.get_db", return_value=_make_push_db_mock(found=True)), \
+         patch("app.push_health_check", side_effect=Exception("connection refused")):
+        resp = client.post(
+            "/catalog/name/bork/health",
+            json={"check_name": "db_connectivity", "status": "pass"},
+        )
+        assert resp.status_code == 502
+        assert "error" in resp.get_json()
