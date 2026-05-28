@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 MOCK_HEALTH = {
     "service": "bork",
@@ -54,3 +54,46 @@ def test_get_single_health_check_returns_502_on_error(client):
         resp = client.get("/catalog/name/bork/health/db_connectivity")
         assert resp.status_code == 502
         assert "error" in resp.get_json()
+
+
+CATALOG_COLUMNS = [
+    "id", "serviceName", "health", "description", "status", "serviceCategory",
+    "serviceSubjectMatterExperts", "criticalDependencies", "documentation",
+    "SLA", "targetAudience", "requestsChannel", "incidentManagement",
+    "monitoringTools", "activeMaintenanceWindows", "onboardingDocumentation",
+    "costModel", "versionInformation", "deprecationPolicy",
+]
+
+BORK_ROW = (
+    1, "bork", None, "Test service", "Active", None,
+    None, None, None, None, None, None, None, None, None, None, None, None, None,
+)
+
+ENRICHED_HEALTH = {"prom_health": "green", "overall_status": "pass", "checks": []}
+
+
+def _make_db_mock(row):
+    mock_cursor = MagicMock()
+    mock_cursor.description = [(col,) for col in CATALOG_COLUMNS]
+    mock_cursor.fetchone.return_value = row
+    mock_cursor.__enter__ = lambda s: s
+    mock_cursor.__exit__ = MagicMock(return_value=False)
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    return mock_conn
+
+
+def test_get_by_name_health_is_enriched(client):
+    with patch("app.get_db", return_value=_make_db_mock(BORK_ROW)), \
+         patch("app.enrich_entry", side_effect=lambda e: {**e, "health": ENRICHED_HEALTH}):
+        resp = client.get("/catalog/name/bork")
+        assert resp.status_code == 200
+        assert resp.get_json()["health"] == ENRICHED_HEALTH
+
+
+def test_get_by_id_health_is_enriched(client):
+    with patch("app.get_db", return_value=_make_db_mock(BORK_ROW)), \
+         patch("app.enrich_entry", side_effect=lambda e: {**e, "health": ENRICHED_HEALTH}):
+        resp = client.get("/catalog/1")
+        assert resp.status_code == 200
+        assert resp.get_json()["health"] == ENRICHED_HEALTH

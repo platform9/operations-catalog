@@ -2,7 +2,7 @@ import json
 from flask import Flask, jsonify, request, abort, send_file, g
 from flask_cors import CORS
 from database import get_db, init_db, row_to_dict
-from health_store import get_service_health, get_single_check
+from health_store import get_service_health, get_single_check, enrich_entry
 
 app = Flask(__name__)
 CORS(app)
@@ -51,7 +51,7 @@ def get_catalog_entry(entry_id):
         row = cur.fetchone()
         if row is None:
             abort(404, description=f"Entry {entry_id} not found")
-        return jsonify(deserialize(row_to_dict(cur, row)))
+        return jsonify(enrich_entry(deserialize(row_to_dict(cur, row))))
 
 
 # ── GET single catalog entry by serviceName ───────────────────────────────────
@@ -63,7 +63,7 @@ def get_catalog_entry_by_name(service_name):
         row = cur.fetchone()
         if row is None:
             abort(404, description=f"Entry '{service_name}' not found")
-        return jsonify(deserialize(row_to_dict(cur, row)))
+        return jsonify(enrich_entry(deserialize(row_to_dict(cur, row))))
 
 
 # ── POST create a new catalog entry ──────────────────────────────────────────
