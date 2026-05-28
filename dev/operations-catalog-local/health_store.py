@@ -45,3 +45,16 @@ def get_single_check(service_name, check_name):
         if check["check_name"] == check_name:
             return check
     return None
+
+
+def enrich_entry(entry: dict) -> dict:
+    try:
+        health = get_service_health(entry["serviceName"])
+        entry["health"] = {
+            "prom_health": "green",
+            "overall_status": health["overall_status"],
+            "checks": health["checks"],
+        }
+    except Exception:
+        entry["health"] = {"prom_health": "red"}
+    return entry
