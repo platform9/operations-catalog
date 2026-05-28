@@ -30,8 +30,7 @@ cd dev/operations-catalog-local/
 ### 2. Install dependencies and run
 
 ```bash
-python -m venv venv
-source venv/bin/activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -57,17 +56,8 @@ python app.py
 | `PGDATABASE` | `catalog` |
 | `PGUSER` | `catalog_user` |
 | `PGPASSWORD` | `catalog_pass` |
-| `PROMETHEUS_URL` | (required) Prometheus base URL, e.g. `http://prometheus:9090` |
-| `PROMETHEUS_PUSHGATEWAY_URL` | (required for producers) Pushgateway URL, e.g. `http://pushgateway:9091` |
-
----
-
-## Docker
-
-```bash
-docker build -t your-registry/operations-catalog-api:latest .
-docker push your-registry/operations-catalog-api:latest
-```
+| `PROMETHEUS_URL` | (required) Prometheus base URL, e.g. `http://localhost:9090` |
+| `PROMETHEUS_PUSHGATEWAY_URL` | (required for producers) Pushgateway URL, e.g. `http://localhost:9091` |
 
 ---
 
@@ -105,12 +95,14 @@ helm install operations-catalog ./helm/operations-catalog-api \
 
 Use `push_health_check.py` to push a named health check result into Prometheus + Loki:
 
-```bash
+```
+bash
 python push_health_check.py <service> <check_name> <pass|warn|fail> [detail]
 ```
 
 Examples:
-```bash
+```
+bash
 python push_health_check.py bork db_connectivity pass "Connected in 12ms"
 python push_health_check.py bork queue_consumer warn "Consumer lag at 4500 messages"
 python push_health_check.py bork db_connectivity fail "Connection refused"
@@ -124,7 +116,8 @@ Requires `PROMETHEUS_PUSHGATEWAY_URL` and `LOKI_URL` to be set. Each push writes
 
 The `health` field on each catalog entry stores a URL to the service's Prometheus/Grafana dashboard (not check state — check state lives in Prometheus + Loki). Update existing entries via the existing PUT endpoint:
 
-```bash
+```
+bash
 curl -X PUT http://localhost:5000/catalog/name/bork \
   -H "Content-Type: application/json" \
   -d '{"health": "https://your-grafana/d/service-health?var-service=bork"}'
@@ -163,3 +156,57 @@ Verify
 ```
 psql -U your_username -d catalog -c "SELECT * FROM catalog;"
 ```
+
+## Total workflow from API to Prometheus
+
+```
+docker ps | grep -E "prometheus|pushgateway"
+cd dev/operations-catalog-local
+source venv/bin/activate
+source .env
+```
+
+
+
+##########################
+3. Verify the metric arrived in Prometheus
+
+Open http://localhost:9090 → use the query box:
+
+service_health_check_status{service="bork"}
+You should see two results with values 0 and 1. If nothing shows up yet, wait ~15 seconds for Prometheus to scrape the Pushgateway.
+
+Or via curl:
+
+curl -s "http://localhost:9090/api/v1/query?query=service_health_check_status%7Bservice%3D%22bork%22%7D" | python3 -m json.tool
+4. Make sure bork exists in the catalog
+
+curl -s http://localhost:5000/catalog/name/bork | python3 -m json.tool
+If it doesn't exist, create it:
+
+curl -X POST http://localhost:5000/catalog \
+  -H "Content-Type: application/json" \
+  -d '{"serviceName": "bork", "description": "test service"}'
+5. Call the enriched catalog endpoint
+
+curl -s http://localhost:5000/catalog/name/bork | python3 -m json.tool
+You should see:
+
+{
+  "serviceName": "bork",
+  "health": {
+    "prom_health": "green",
+    "overall_status": "warn",
+    "checks": [
+      { "check_name": "db_connectivity", "status": "pass", "last_updated": "..." },
+      { "check_name": "queue_consumer", "status": "warn", "last_updated": "..." }
+    ]
+  },
+  ...
+}
+6. Test the red path — stop Prometheus and hit the endpoint again:
+
+docker stop $(docker ps -q --filter ancestor=prom/prometheus)
+curl -s http://localhost:5000/catalog/name/bork | python3 -m json.tool
+# health should be: { "prom_health": "red" }
+############################

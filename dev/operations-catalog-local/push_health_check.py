@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 
