@@ -111,7 +111,7 @@ def _make_push_db_mock(found=True):
 
 def test_push_health_check_returns_200(client):
     with patch("app.get_db", return_value=_make_push_db_mock(found=True)), \
-         patch("app.push_health_check"):
+         patch("app.push_health_check") as mock_push:
         resp = client.post(
             "/catalog/name/bork/health",
             json={"check_name": "db_connectivity", "status": "pass"},
@@ -122,6 +122,7 @@ def test_push_health_check_returns_200(client):
         assert data["service"] == "bork"
         assert data["check_name"] == "db_connectivity"
         assert data["status"] == "pass"
+        mock_push.assert_called_once_with("bork", "db_connectivity", "pass")
 
 
 def test_push_health_check_returns_404_when_service_missing(client):
@@ -151,3 +152,21 @@ def test_push_health_check_returns_502_on_pushgateway_failure(client):
         )
         assert resp.status_code == 502
         assert "error" in resp.get_json()
+
+
+def test_push_health_check_returns_400_on_whitespace_check_name(client):
+    resp = client.post(
+        "/catalog/name/bork/health",
+        json={"check_name": "   ", "status": "pass"},
+    )
+    assert resp.status_code == 400
+    assert "error" in resp.get_json()
+
+
+def test_push_health_check_returns_400_on_missing_status(client):
+    resp = client.post(
+        "/catalog/name/bork/health",
+        json={"check_name": "db_connectivity"},
+    )
+    assert resp.status_code == 400
+    assert "error" in resp.get_json()
