@@ -188,6 +188,31 @@
     .badge-active   { background: #dcfce7; color: #15803d; }
     .badge-inactive { background: #fee2e2; color: #b91c1c; }
     .badge-default  { background: #f5f5f4; color: #57534e; }
+    .badge-warning  { background: #fef3c7; color: #92400e; }
+
+    .health-checks { margin-top: 8px; }
+    .health-checks summary {
+      font-size: 12px;
+      color: #78716c;
+      cursor: pointer;
+      user-select: none;
+      padding: 2px 0;
+    }
+    .health-checks summary:hover { color: #1c1917; }
+    .health-checks table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .health-checks th {
+      text-align: left;
+      color: #78716c;
+      font-weight: 600;
+      padding: 4px 8px 4px 0;
+      border-bottom: 1px solid #e7e5e4;
+    }
+    .health-checks td { padding: 6px 8px 6px 0; border-bottom: 1px solid #f5f5f4; }
 
     .fields {
       display: grid;
@@ -318,7 +343,7 @@
     list.innerHTML = entries.map(e => `
       <div class="entry-item${selectedId === e.id ? ' active' : ''}" onclick="selectEntry(${e.id})">
         <div class="entry-name">${esc(e.serviceName)}</div>
-        <div class="entry-meta">${esc(e.serviceCategory || '—')} · ${esc(e.status || 'Unknown')} · ${esc(getHealthValue(e.health, 'overall') || '—')}</div>
+        <div class="entry-meta">${esc(e.serviceCategory || '—')} · ${esc(e.status || 'Unknown')}</div>
       </div>
     `).join('');
   }
@@ -327,7 +352,10 @@
     selectedId = id;
     renderList();
     const e = entries.find(x => x.id === id);
-    if (e) renderDetail(e);
+    if (e) {
+        renderDetail(e);
+        fetchAndRenderHealth(e.serviceName);
+    }
   }
 
   function renderDetail(e) {
@@ -342,11 +370,13 @@
             <div class="detail-subtitle">${esc(e.serviceCategory || 'Uncategorized')}</div>
           </div>
           <span class="badge ${badgeClass}">${esc(e.status || 'Unknown')}</span>
-          <span class="badge ${healthBadgeClass(e.health)}">${esc(getHealthValue(e.health, 'overall') || 'Unknown')}</span>
         </div>
         <div class="fields">
           ${field('Description', e.description, true)}
-          ${healthField(e.health)}
+          <div id="health-section" class="field full">
+            <div class="field-label">Health</div>
+            <div class="field-value"><span class="badge badge-default">checking…</span></div>
+          </div>
           ${field('Target audience', e.targetAudience)}
           ${field('Requests channel', e.requestsChannel)}
           ${field('Incident management', e.incidentManagement)}
@@ -386,31 +416,70 @@
     </div>`;
   }
 
-  function getHealthValue(health, key) {
-    if (!health || !Array.isArray(health)) return null;
-    const entry = health.find(h => h.key === key);
-    return entry ? entry.value : null;
-  }
-
   function healthBadgeClass(health) {
-    const overall = getHealthValue(health, 'overall');
-    switch ((overall || '').toLowerCase()) {
-      case 'green':  return 'badge-active';
-      case 'yellow': return 'badge-default';
-      case 'red':    return 'badge-inactive';
-      default:       return 'badge-default';
+    if (!health || health.prom_health === 'red') return 'badge-default';
+    switch (health.overall_status) {
+        case 'pass': return 'badge-active';
+        case 'warn': return 'badge-warning';
+        case 'fail': return 'badge-inactive';
+        default:     return 'badge-default';
     }
   }
 
-  function healthField(health) {
-    if (!health || !Array.isArray(health)) return '';
-    const tags = health.map(h =>
-      `<span class="tag">${esc(h.key)}: ${esc(h.value)}</span>`
-    ).join('');
-    return `<div class="field">
+  function renderHealthSection(health) {
+    if (!health || health.prom_health === 'red') {
+        return `<div class="field full">
+          <div class="field-label">Health</div>
+          <div class="field-value">
+            <span class="badge badge-default">unavailable</span>
+            <small style="color:#888;margin-left:6px">Prometheus unreachable</small>
+          </div>
+        </div>`;
+    }
+    const overallClass = healthBadgeClass(health);
+    const checks = health.checks || [];
+    const checkRows = checks.map(c => {
+        const cls = c.status === 'pass' ? 'badge-active'
+                  : c.status === 'warn' ? 'badge-warning'
+                  : 'badge-inactive';
+        const ts = c.last_updated
+            ? new Date(c.last_updated).toUTCString().replace(' GMT', ' UTC')
+            : '—';
+        return `<tr>
+          <td>${esc(c.check_name)}</td>
+          <td><span class="badge ${cls}">${esc(c.status)}</span></td>
+          <td style="color:#78716c">${ts}</td>
+        </tr>`;
+    }).join('');
+    const summary = checks.length === 1 ? '1 check' : `${checks.length} checks`;
+    return `<div class="field full">
       <div class="field-label">Health</div>
-      <div class="tag-list" style="margin-top:4px">${tags}</div>
+      <div style="margin-top:4px">
+        <span class="badge ${overallClass}">${esc(health.overall_status)}</span>
+        ${checks.length ? `
+        <details class="health-checks">
+          <summary>${summary}</summary>
+          <table>
+            <tr><th>Check</th><th>Status</th><th>Last updated</th></tr>
+            ${checkRows}
+          </table>
+        </details>` : ''}
+      </div>
     </div>`;
+  }
+
+  async function fetchAndRenderHealth(serviceName) {
+    const el = document.getElementById('health-section');
+    if (!el) return;
+    try {
+        const base = document.getElementById('api-url').value.replace(/\/$/, '');
+        const resp = await fetch(`${base}/catalog/name/${encodeURIComponent(serviceName)}`);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        el.outerHTML = renderHealthSection(data.health);
+    } catch (_) {
+        el.outerHTML = renderHealthSection(null);
+    }
   }
   
   function linksField(label, arr) {
