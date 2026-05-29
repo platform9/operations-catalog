@@ -25,8 +25,8 @@ def test_query_metrics_maps_values_to_status():
     with patch("health_store.requests.get", side_effect=_mock_get(METRICS_RESPONSE)):
         import health_store
         result = health_store._query_metrics("bork")
-        assert result["db_connectivity"]["status"] == "pass"
-        assert result["queue_consumer"]["status"] == "warn"
+        assert result["db_connectivity"]["status"] == "green"
+        assert result["queue_consumer"]["status"] == "yellow"
 
 
 def test_query_metrics_includes_timestamp():
@@ -42,10 +42,10 @@ def test_get_service_health_returns_checks():
         import health_store
         result = health_store.get_service_health("bork")
         assert result["service"] == "bork"
-        assert result["overall_status"] == "warn"
+        assert result["overall_status"] == "yellow"
         assert len(result["checks"]) == 2
         db_check = next(c for c in result["checks"] if c["check_name"] == "db_connectivity")
-        assert db_check["status"] == "pass"
+        assert db_check["status"] == "green"
 
 
 def test_get_service_health_overall_fail_takes_priority():
@@ -60,7 +60,7 @@ def test_get_service_health_overall_fail_takes_priority():
     with patch("health_store.requests.get", side_effect=_mock_get(fail_metrics)):
         import health_store
         result = health_store.get_service_health("bork")
-        assert result["overall_status"] == "fail"
+        assert result["overall_status"] == "red"
 
 
 def test_get_service_health_no_checks_returns_pass():
@@ -68,7 +68,7 @@ def test_get_service_health_no_checks_returns_pass():
     with patch("health_store.requests.get", side_effect=_mock_get(empty)):
         import health_store
         result = health_store.get_service_health("bork")
-        assert result["overall_status"] == "pass"
+        assert result["overall_status"] == "green"
         assert result["checks"] == []
 
 
@@ -78,7 +78,7 @@ def test_get_single_check_returns_matching_check():
         result = health_store.get_single_check("bork", "db_connectivity")
         assert result is not None
         assert result["check_name"] == "db_connectivity"
-        assert result["status"] == "pass"
+        assert result["status"] == "green"
 
 
 def test_get_single_check_returns_none_for_unknown():
@@ -91,15 +91,15 @@ def test_get_single_check_returns_none_for_unknown():
 def test_enrich_entry_replaces_health_on_success():
     mock_health = {
         "service": "bork",
-        "overall_status": "pass",
-        "checks": [{"check_name": "db_connectivity", "status": "pass", "last_updated": "2026-05-27T10:00:00+00:00"}],
+        "overall_status": "green",
+        "checks": [{"check_name": "db_connectivity", "status": "green", "last_updated": "2026-05-27T10:00:00+00:00"}],
     }
     with patch("health_store.get_service_health", return_value=mock_health):
         import health_store
         entry = {"serviceName": "bork", "health": "http://grafana/bork", "description": "test"}
         result = health_store.enrich_entry(entry)
         assert result["health"]["prom_health"] == "green"
-        assert result["health"]["overall_status"] == "pass"
+        assert result["health"]["overall_status"] == "green"
         assert result["health"]["checks"] == mock_health["checks"]
         assert result["description"] == "test"  # other fields unchanged
 
