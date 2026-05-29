@@ -309,6 +309,7 @@
 <script>
   let entries = [];
   let selectedId = null;
+  let currentServiceName = null;
 
   async function loadCatalog() {
     const base = document.getElementById('api-url').value.replace(/\/$/, '');
@@ -419,37 +420,38 @@
   function healthBadgeClass(health) {
     if (!health || health.prom_health === 'red') return 'badge-default';
     switch (health.overall_status) {
-        case 'pass': return 'badge-active';
-        case 'warn': return 'badge-warning';
-        case 'fail': return 'badge-inactive';
-        default:     return 'badge-default';
+      case 'pass': return 'badge-active';
+      case 'warn': return 'badge-warning';
+      case 'fail': return 'badge-inactive';
+      default:     return 'badge-default';
     }
   }
 
-  function renderHealthSection(health) {
+  function renderHealthSection(health, errorMsg) {
+    errorMsg = errorMsg || 'Prometheus unreachable';
     if (!health || health.prom_health === 'red') {
-        return `<div class="field full">
-          <div class="field-label">Health</div>
-          <div class="field-value">
-            <span class="badge badge-default">unavailable</span>
-            <small style="color:#888;margin-left:6px">Prometheus unreachable</small>
-          </div>
-        </div>`;
+      return `<div class="field full">
+        <div class="field-label">Health</div>
+        <div class="field-value">
+          <span class="badge badge-default">unavailable</span>
+          <small style="color:#888;margin-left:6px">${esc(errorMsg)}</small>
+        </div>
+      </div>`;
     }
     const overallClass = healthBadgeClass(health);
     const checks = health.checks || [];
     const checkRows = checks.map(c => {
-        const cls = c.status === 'pass' ? 'badge-active'
-                  : c.status === 'warn' ? 'badge-warning'
-                  : 'badge-inactive';
-        const ts = c.last_updated
-            ? new Date(c.last_updated).toUTCString().replace(' GMT', ' UTC')
-            : '—';
-        return `<tr>
-          <td>${esc(c.check_name)}</td>
-          <td><span class="badge ${cls}">${esc(c.status)}</span></td>
-          <td style="color:#78716c">${ts}</td>
-        </tr>`;
+      const cls = c.status === 'pass' ? 'badge-active'
+                : c.status === 'warn' ? 'badge-warning'
+                : 'badge-inactive';
+      const ts = c.last_updated
+        ? new Date(c.last_updated).toUTCString().replace(' GMT', ' UTC')
+        : '—';
+      return `<tr>
+        <td>${esc(c.check_name)}</td>
+        <td><span class="badge ${cls}">${esc(c.status)}</span></td>
+        <td style="color:#78716c">${esc(ts)}</td>
+      </tr>`;
     }).join('');
     const summary = checks.length === 1 ? '1 check' : `${checks.length} checks`;
     return `<div class="field full">
@@ -469,16 +471,21 @@
   }
 
   async function fetchAndRenderHealth(serviceName) {
+    currentServiceName = serviceName;
     const el = document.getElementById('health-section');
     if (!el) return;
     try {
-        const base = document.getElementById('api-url').value.replace(/\/$/, '');
-        const resp = await fetch(`${base}/catalog/name/${encodeURIComponent(serviceName)}`);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        el.outerHTML = renderHealthSection(data.health);
-    } catch (_) {
-        el.outerHTML = renderHealthSection(null);
+      const base = document.getElementById('api-url').value.replace(/\/$/, '');
+      const resp = await fetch(`${base}/catalog/name/${encodeURIComponent(serviceName)}`);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      if (currentServiceName !== serviceName) return;
+      const fresh = document.getElementById('health-section');
+      if (fresh) fresh.outerHTML = renderHealthSection(data.health);
+    } catch (err) {
+      if (currentServiceName !== serviceName) return;
+      const fresh = document.getElementById('health-section');
+      if (fresh) fresh.outerHTML = renderHealthSection(null, err.message);
     }
   }
   
