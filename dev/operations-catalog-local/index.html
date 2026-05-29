@@ -417,17 +417,13 @@
     </div>`;
   }
 
-  function statusLabel(s) {
-    return s === 'pass' ? 'green' : s === 'warn' ? 'yellow' : s === 'fail' ? 'red' : s;
-  }
-
   function healthBadgeClass(health) {
     if (!health || health.prom_health === 'red') return 'badge-default';
     switch (health.overall_status) {
-      case 'pass': return 'badge-active';
-      case 'warn': return 'badge-warning';
-      case 'fail': return 'badge-inactive';
-      default:     return 'badge-default';
+      case 'green':  return 'badge-active';
+      case 'yellow': return 'badge-warning';
+      case 'red':    return 'badge-inactive';
+      default:       return 'badge-default';
     }
   }
 
@@ -445,15 +441,15 @@
     const overallClass = healthBadgeClass(health);
     const checks = health.checks || [];
     const checkRows = checks.map(c => {
-      const cls = c.status === 'pass' ? 'badge-active'
-                : c.status === 'warn' ? 'badge-warning'
+      const cls = c.status === 'green'  ? 'badge-active'
+                : c.status === 'yellow' ? 'badge-warning'
                 : 'badge-inactive';
       const ts = c.last_updated
         ? new Date(c.last_updated).toUTCString().replace(' GMT', ' UTC')
         : '—';
       return `<tr>
         <td>${esc(c.check_name)}</td>
-        <td><span class="badge ${cls}">${esc(statusLabel(c.status))}</span></td>
+        <td><span class="badge ${cls}">${esc(c.status)}</span></td>
         <td style="color:#78716c">${esc(ts)}</td>
       </tr>`;
     }).join('');
@@ -461,7 +457,7 @@
     return `<div class="field full">
       <div class="field-label">Health</div>
       <div style="margin-top:4px">
-        <span class="badge ${overallClass}">${esc(statusLabel(health.overall_status))}</span>
+        <span class="badge ${overallClass}">${esc(health.overall_status)}</span>
         ${checks.length ? `
         <details class="health-checks">
           <summary>${summary}</summary>

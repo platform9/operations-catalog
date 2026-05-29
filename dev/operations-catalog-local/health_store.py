@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "")
 
-STATUS_MAP = {0: "pass", 1: "warn", 2: "fail"}
-STATUS_RANK = {"pass": 0, "warn": 1, "fail": 2}
+STATUS_MAP = {0: "green", 1: "yellow", 2: "red"}
+STATUS_RANK = {"green": 0, "yellow": 1, "red": 2}
 
 
 def _query_metrics(service_name):
@@ -32,7 +32,7 @@ def get_service_health(service_name):
         {"check_name": name, **data}
         for name, data in checks_data.items()
     ]
-    overall = "pass"
+    overall = "green"
     for check in checks:
         if STATUS_RANK.get(check["status"], 0) > STATUS_RANK.get(overall, 0):
             overall = check["status"]
