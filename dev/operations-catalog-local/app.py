@@ -4,6 +4,7 @@ from flask_cors import CORS
 from database import get_db, init_db, row_to_dict
 from health_store import get_service_health, get_single_check, enrich_entry
 from push_health_check import push_health_check
+from quality_score import start_scheduler
 
 app = Flask(__name__)
 CORS(app)
@@ -322,4 +323,5 @@ def index():
 
 
 if __name__ == "__main__":
+    start_scheduler(app)
     app.run(debug=True, port=5000)
