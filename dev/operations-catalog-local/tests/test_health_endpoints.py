@@ -61,12 +61,12 @@ CATALOG_COLUMNS = [
     "serviceSubjectMatterExperts", "criticalDependencies", "documentation",
     "SLA", "targetAudience", "requestsChannel", "incidentManagement",
     "monitoringTools", "activeMaintenanceWindows", "onboardingDocumentation",
-    "costModel", "versionInformation", "deprecationPolicy",
+    "costModel", "versionInformation", "deprecationPolicy", "statusPageUrl",
 ]
 
 BORK_ROW = (
     1, "bork", None, "Test service", "Active", None,
-    None, None, None, None, None, None, None, None, None, None, None, None, None,
+    None, None, None, None, None, None, None, None, None, None, None, None, None, None,
 )
 
 ENRICHED_HEALTH = {"prom_health": "green", "overall_status": "pass", "checks": []}
