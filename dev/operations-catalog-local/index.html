@@ -457,7 +457,7 @@
     const qualityLine = (health.quality_score !== null && health.quality_score !== undefined)
         ? `<div style="margin-top:6px;font-size:12px;color:#78716c">
              Quality score: <strong style="color:#1c1917">${health.quality_score.toFixed(2)}</strong>
-             <span style="color:#a8a29e">(refreshed every ${esc(String(health.quality_score_interval_minutes))} min)</span>
+             <span style="color:#a8a29e">(refreshed every ${esc(String(health.quality_score_interval_minutes ?? '?'))} min)</span>
            </div>`
         : '';
     return `<div class="field full">
