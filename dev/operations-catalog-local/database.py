@@ -34,8 +34,13 @@ CREATE TABLE IF NOT EXISTS catalog (
     "onboardingDocumentation"   TEXT,
     "costModel"                 TEXT,
     "versionInformation"        TEXT,
-    "deprecationPolicy"         TEXT
+    "deprecationPolicy"         TEXT,
+    "statusPageUrl"             TEXT
 );
+"""
+
+MIGRATION = """
+ALTER TABLE catalog ADD COLUMN IF NOT EXISTS "statusPageUrl" TEXT;
 """
 
 
@@ -47,10 +52,11 @@ def get_db():
 
 
 def init_db():
-    """Create tables if they don't exist yet."""
+    """Create tables if they don't exist yet, and run idempotent migrations."""
     conn = get_db()
     with conn.cursor() as cur:
         cur.execute(SCHEMA)
+        cur.execute(MIGRATION)
     conn.commit()
 
 

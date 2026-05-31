@@ -83,8 +83,8 @@ def create_catalog_entry():
                 "serviceSubjectMatterExperts", "criticalDependencies", documentation,
                 "SLA", "targetAudience", "requestsChannel", "incidentManagement",
                 "monitoringTools", "activeMaintenanceWindows", "onboardingDocumentation",
-                "costModel", "versionInformation", "deprecationPolicy"
-            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                "costModel", "versionInformation", "deprecationPolicy", "statusPageUrl"
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             RETURNING id
             """,
             (
@@ -106,6 +106,7 @@ def create_catalog_entry():
                 data.get("costModel"),
                 data.get("versionInformation"),
                 data.get("deprecationPolicy"),
+                data.get("statusPageUrl"),
             ),
         )
         new_id = cur.fetchone()[0]
@@ -136,7 +137,7 @@ def update_catalog_entry(entry_id):
                 "serviceSubjectMatterExperts"=%s, "criticalDependencies"=%s, documentation=%s,
                 "SLA"=%s, "targetAudience"=%s, "requestsChannel"=%s, "incidentManagement"=%s,
                 "monitoringTools"=%s, "activeMaintenanceWindows"=%s, "onboardingDocumentation"=%s,
-                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s
+                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s, "statusPageUrl"=%s
             WHERE id=%s
             """,
             (
@@ -158,6 +159,7 @@ def update_catalog_entry(entry_id):
                 current.get("costModel"),
                 current.get("versionInformation"),
                 current.get("deprecationPolicy"),
+                current.get("statusPageUrl"),
                 entry_id,
             ),
         )
@@ -188,7 +190,7 @@ def update_catalog_entry_by_name(service_name):
                 "serviceSubjectMatterExperts"=%s, "criticalDependencies"=%s, documentation=%s,
                 "SLA"=%s, "targetAudience"=%s, "requestsChannel"=%s, "incidentManagement"=%s,
                 "monitoringTools"=%s, "activeMaintenanceWindows"=%s, "onboardingDocumentation"=%s,
-                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s
+                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s, "statusPageUrl"=%s
             WHERE "serviceName"=%s
             """,
             (
@@ -210,6 +212,7 @@ def update_catalog_entry_by_name(service_name):
                 current.get("costModel"),
                 current.get("versionInformation"),
                 current.get("deprecationPolicy"),
+                current.get("statusPageUrl"),
                 service_name,
             ),
         )
