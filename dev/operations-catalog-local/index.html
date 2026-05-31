@@ -454,6 +454,12 @@
       </tr>`;
     }).join('');
     const summary = checks.length === 1 ? '1 check' : `${checks.length} checks`;
+    const qualityLine = (health.quality_score !== null && health.quality_score !== undefined)
+        ? `<div style="margin-top:6px;font-size:12px;color:#78716c">
+             Quality score: <strong style="color:#1c1917">${health.quality_score.toFixed(2)}</strong>
+             <span style="color:#a8a29e">(refreshed every ${esc(String(health.quality_score_interval_minutes))} min)</span>
+           </div>`
+        : '';
     return `<div class="field full">
       <div class="field-label">Health</div>
       <div style="margin-top:4px">
@@ -466,6 +472,7 @@
             ${checkRows}
           </table>
         </details>` : ''}
+        ${qualityLine}
       </div>
     </div>`;
   }
