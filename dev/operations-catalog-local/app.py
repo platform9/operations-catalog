@@ -4,6 +4,7 @@ from flask_cors import CORS
 from database import get_db, init_db, row_to_dict
 from health_store import get_service_health, get_single_check, enrich_entry
 from push_health_check import push_health_check
+from quality_score import start_scheduler
 
 app = Flask(__name__)
 CORS(app)
@@ -83,8 +84,8 @@ def create_catalog_entry():
                 "serviceSubjectMatterExperts", "criticalDependencies", documentation,
                 "SLA", "targetAudience", "requestsChannel", "incidentManagement",
                 "monitoringTools", "activeMaintenanceWindows", "onboardingDocumentation",
-                "costModel", "versionInformation", "deprecationPolicy"
-            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                "costModel", "versionInformation", "deprecationPolicy", "statusPageUrl"
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             RETURNING id
             """,
             (
@@ -106,6 +107,7 @@ def create_catalog_entry():
                 data.get("costModel"),
                 data.get("versionInformation"),
                 data.get("deprecationPolicy"),
+                data.get("statusPageUrl"),
             ),
         )
         new_id = cur.fetchone()[0]
@@ -136,7 +138,7 @@ def update_catalog_entry(entry_id):
                 "serviceSubjectMatterExperts"=%s, "criticalDependencies"=%s, documentation=%s,
                 "SLA"=%s, "targetAudience"=%s, "requestsChannel"=%s, "incidentManagement"=%s,
                 "monitoringTools"=%s, "activeMaintenanceWindows"=%s, "onboardingDocumentation"=%s,
-                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s
+                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s, "statusPageUrl"=%s
             WHERE id=%s
             """,
             (
@@ -158,6 +160,7 @@ def update_catalog_entry(entry_id):
                 current.get("costModel"),
                 current.get("versionInformation"),
                 current.get("deprecationPolicy"),
+                current.get("statusPageUrl"),
                 entry_id,
             ),
         )
@@ -188,7 +191,7 @@ def update_catalog_entry_by_name(service_name):
                 "serviceSubjectMatterExperts"=%s, "criticalDependencies"=%s, documentation=%s,
                 "SLA"=%s, "targetAudience"=%s, "requestsChannel"=%s, "incidentManagement"=%s,
                 "monitoringTools"=%s, "activeMaintenanceWindows"=%s, "onboardingDocumentation"=%s,
-                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s
+                "costModel"=%s, "versionInformation"=%s, "deprecationPolicy"=%s, "statusPageUrl"=%s
             WHERE "serviceName"=%s
             """,
             (
@@ -210,6 +213,7 @@ def update_catalog_entry_by_name(service_name):
                 current.get("costModel"),
                 current.get("versionInformation"),
                 current.get("deprecationPolicy"),
+                current.get("statusPageUrl"),
                 service_name,
             ),
         )
@@ -319,4 +323,5 @@ def index():
 
 
 if __name__ == "__main__":
+    start_scheduler(app)
     app.run(debug=True, port=5000)

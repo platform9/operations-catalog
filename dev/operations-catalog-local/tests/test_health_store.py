@@ -94,14 +94,43 @@ def test_enrich_entry_replaces_health_on_success():
         "overall_status": "green",
         "checks": [{"check_name": "db_connectivity", "status": "green", "last_updated": "2026-05-27T10:00:00+00:00"}],
     }
-    with patch("health_store.get_service_health", return_value=mock_health):
+    with patch("health_store.get_service_health", return_value=mock_health), \
+         patch("health_store._query_quality_score", return_value=0.85):
         import health_store
         entry = {"serviceName": "bork", "health": "http://grafana/bork", "description": "test"}
         result = health_store.enrich_entry(entry)
         assert result["health"]["prom_health"] == "green"
         assert result["health"]["overall_status"] == "green"
         assert result["health"]["checks"] == mock_health["checks"]
+        assert result["health"]["quality_score"] == 0.85
+        assert result["health"]["quality_score_interval_minutes"] == 10
         assert result["description"] == "test"  # other fields unchanged
+
+
+def test_enrich_entry_quality_score_null_when_absent():
+    mock_health = {
+        "service": "bork",
+        "overall_status": "green",
+        "checks": [],
+    }
+    with patch("health_store.get_service_health", return_value=mock_health), \
+         patch("health_store._query_quality_score", return_value=None):
+        import health_store
+        entry = {"serviceName": "bork", "health": None, "description": "no status page"}
+        result = health_store.enrich_entry(entry)
+        assert result["health"]["quality_score"] is None
+        assert result["health"]["quality_score_interval_minutes"] == 10
+
+
+def test_enrich_entry_quality_score_exception_does_not_set_prom_health_red():
+    mock_health = {"service": "bork", "overall_status": "green", "checks": []}
+    with patch("health_store.get_service_health", return_value=mock_health), \
+         patch("health_store._query_quality_score", side_effect=Exception("prom timeout")):
+        import health_store
+        entry = {"serviceName": "bork"}
+        result = health_store.enrich_entry(entry)
+        assert result["health"]["prom_health"] == "green"
+        assert result["health"]["quality_score"] is None
 
 
 def test_enrich_entry_sets_prom_health_red_on_failure():

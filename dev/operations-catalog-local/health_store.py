@@ -3,6 +3,7 @@ import requests
 from datetime import datetime, timezone
 
 PROMETHEUS_URL = os.environ.get("PROMETHEUS_URL", "")
+QUALITY_SCORE_INTERVAL_MINUTES = int(os.environ.get("QUALITY_SCORE_INTERVAL_MINUTES", "10"))
 
 STATUS_MAP = {0: "green", 1: "yellow", 2: "red"}
 STATUS_RANK = {"green": 0, "yellow": 1, "red": 2}
@@ -24,6 +25,18 @@ def _query_metrics(service_name):
                 "last_updated": timestamp,
             }
     return results
+
+
+def _query_quality_score(service_name):
+    """Query service_quality_score metric from Prometheus. Returns float or None."""
+    url = f"{PROMETHEUS_URL}/api/v1/query"
+    query = f'service_quality_score{{service="{service_name}"}}'
+    resp = requests.get(url, params={"query": query}, timeout=10)
+    resp.raise_for_status()
+    results = resp.json().get("data", {}).get("result", [])
+    if not results:
+        return None
+    return round(float(results[0]["value"][1]), 4)
 
 
 def get_service_health(service_name):
@@ -50,10 +63,16 @@ def get_single_check(service_name, check_name):
 def enrich_entry(entry: dict) -> dict:
     try:
         health = get_service_health(entry["serviceName"])
+        try:
+            quality_score = _query_quality_score(entry["serviceName"])
+        except Exception:
+            quality_score = None
         entry["health"] = {
             "prom_health": "green",
             "overall_status": health["overall_status"],
             "checks": health["checks"],
+            "quality_score": quality_score,
+            "quality_score_interval_minutes": QUALITY_SCORE_INTERVAL_MINUTES,
         }
     except Exception:
         entry["health"] = {"prom_health": "red"}
