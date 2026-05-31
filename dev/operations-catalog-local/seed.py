@@ -34,6 +34,7 @@ SAMPLE = {
     "costModel": "External information needed",
     "versionInformation": "N/A",
     "deprecationPolicy": "External information needed",
+    "statusPageUrl": None,
 }
 
 SCHEMA = """
@@ -56,7 +57,8 @@ CREATE TABLE IF NOT EXISTS catalog (
     "onboardingDocumentation"   TEXT,
     "costModel"                 TEXT,
     "versionInformation"        TEXT,
-    "deprecationPolicy"         TEXT
+    "deprecationPolicy"         TEXT,
+    "statusPageUrl"             TEXT
 );
 """
 
@@ -71,8 +73,8 @@ if __name__ == "__main__":
             "serviceSubjectMatterExperts", "criticalDependencies", documentation,
             "SLA", "targetAudience", "requestsChannel", "incidentManagement",
             "monitoringTools", "activeMaintenanceWindows", "onboardingDocumentation",
-            "costModel", "versionInformation", "deprecationPolicy"
-        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            "costModel", "versionInformation", "deprecationPolicy", "statusPageUrl"
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """,
         (
             SAMPLE["serviceName"],
@@ -93,6 +95,7 @@ if __name__ == "__main__":
             SAMPLE["costModel"],
             SAMPLE["versionInformation"],
             SAMPLE["deprecationPolicy"],
+            SAMPLE["statusPageUrl"],
         ),
     )
     conn.commit()
