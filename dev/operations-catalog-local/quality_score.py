@@ -11,6 +11,9 @@ PROMETHEUS_PUSHGATEWAY_URL = os.environ.get("PROMETHEUS_PUSHGATEWAY_URL", "")
 
 logger = logging.getLogger(__name__)
 
+if not PROMETHEUS_PUSHGATEWAY_URL:
+    logger.warning("PROMETHEUS_PUSHGATEWAY_URL is not set; quality score pushes will be skipped")
+
 STATUS_SCORE_MAP = {
     "ok": 1.0, "healthy": 1.0, "operational": 1.0, "up": 1.0, "green": 1.0,
     "degraded": 0.5, "warning": 0.5, "partial_outage": 0.5, "yellow": 0.5,
@@ -56,7 +59,7 @@ def refresh_all_quality_scores(app):
             with conn.cursor() as cur:
                 cur.execute(
                     'SELECT "serviceName", "statusPageUrl" FROM catalog '
-                    'WHERE "statusPageUrl" IS NOT NULL'
+                    'WHERE "statusPageUrl" IS NOT NULL AND "statusPageUrl" != \'\''
                 )
                 rows = cur.fetchall()
             for service_name, url in rows:
@@ -73,6 +76,10 @@ def start_scheduler(app):
 
     Call this from app.py's __main__ block. Registers an atexit handler to shut
     the scheduler down cleanly when Flask exits.
+
+    NOTE: This only runs when Flask's built-in dev server is used directly.
+    For production deployments (gunicorn, uwsgi), wire start_scheduler() into
+    the app factory or a custom server entrypoint.
     """
     from apscheduler.schedulers.background import BackgroundScheduler
     import atexit
@@ -84,5 +91,5 @@ def start_scheduler(app):
         minutes=interval,
     )
     scheduler.start()
-    atexit.register(lambda: scheduler.shutdown())
+    atexit.register(scheduler.shutdown)
     logger.info("Quality score scheduler started (interval: %d minutes)", interval)
